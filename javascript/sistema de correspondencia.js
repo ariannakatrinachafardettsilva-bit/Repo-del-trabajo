@@ -7,10 +7,9 @@
 
 // ==================== CONFIGURACIÓN GLOBAL ====================
 const CONFIG = {
-  // Logos en formato Base64 (PNG recomendado)
+
   // IMPORTANTE: Reemplaza estos valores con los Base64 de tus logos reales.
-  LOGO_UCV_BASE64: 'iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAAACOEfKtAAAAAXNSR0IArs4c6QAAAARzQklUCAgICHwIZIgAAAAtSURBVHic7cEBAQAAAIIg/69uSEABAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgbSYYAAQ9Jp2AAAAAASUVORK5CYII=', // Placeholder (cuadrado rojo)
-  LOGO_DEU_BASE64: 'iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAAACOEfKtAAAAAXNSR0IArs4c6QAAAARzQklUCAgICHwIZIgAAAAtSURBVHic7cEBAQAAAIIg/69uSEABAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgbSYYAAQ9Jp2AAAAAASUVORK5CYII=', // Placeholder (cuadrado rojo)
+ 
 
   PLANTILLA: `{{codigo}}
 
@@ -192,7 +191,7 @@ const Documento = {
     body.setLineSpacing(CONFIG.ESTILOS.INTERLINEADO);
 
     // Insertar logos desde Base64
-    this._insertarLogosBase64(body);
+
 
     // Insertar líneas de la plantilla con formato específico
     const lineas = CONFIG.PLANTILLA.split('\n');
@@ -226,28 +225,7 @@ const Documento = {
     return doc;
   },
 
-  _insertarLogosBase64(body) {
-    try {
-      const tabla = body.insertTable(0, [['', '']]);
-      const celdaIzq = tabla.getCell(0, 0);
-      const celdaDer = tabla.getCell(0, 1);
 
-      // Convertir Base64 a Blob
-      const ucvBlob = Utilities.newBlob(Utilities.base64Decode(CONFIG.LOGO_UCV_BASE64), 'image/png', 'logo_ucv.png');
-      const deuBlob = Utilities.newBlob(Utilities.base64Decode(CONFIG.LOGO_DEU_BASE64), 'image/png', 'logo_deu.png');
-
-      celdaIzq.appendImage(ucvBlob);
-      celdaDer.appendImage(deuBlob);
-
-      tabla.setColumnWidth(0, 200);
-      tabla.setColumnWidth(1, 200);
-      celdaIzq.getParagraphs()[0].setAlignment(DocumentApp.HorizontalAlignment.LEFT);
-      celdaDer.getParagraphs()[0].setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
-    } catch (e) {
-      console.warn('Error insertando logos desde Base64:', e);
-      body.appendParagraph('[Aviso: No se pudieron cargar los logos desde Base64]');
-    }
-  },
 
   generarPDF(doc, nombreArchivo) {
     const pdfBlob = doc.getAs(MimeType.PDF).setName(`${nombreArchivo}.pdf`);
