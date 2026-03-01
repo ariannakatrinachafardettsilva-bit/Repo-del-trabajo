@@ -1,16 +1,8 @@
-/**
- * ==============================================
- * SISTEMA DEU v7.3 - CON LOGOS INTEGRADOS (BASE64)
- * Basado en test2.pdf con formato profesional
- * ==============================================
- */
+// Sistema DEU – generación automatizada de oficios
+// (basado en test2.pdf, versión 7.3)
 
 // ==================== CONFIGURACIÓN GLOBAL ====================
 const CONFIG = {
-
-  // IMPORTANTE: Reemplaza estos valores con los Base64 de tus logos reales.
- 
-
   PLANTILLA: `{{codigo}}
 
 Caracas, {{fecha}}
@@ -89,10 +81,6 @@ const Utils = {
   }
 };
 
-// ==================== FUNCIÓN GLOBAL DE RESPALDO ====================
-function zeroPad(num, length) {
-  return Utils.zeroPad(num, length);
-}
 
 // ==================== GESTOR DE PROPIEDADES ====================
 const Props = {
@@ -189,9 +177,6 @@ const Documento = {
     body.setMarginLeft(CONFIG.ESTILOS.MARGEN_IZQUIERDO);
     body.setMarginRight(CONFIG.ESTILOS.MARGEN_DERECHO);
     body.setLineSpacing(CONFIG.ESTILOS.INTERLINEADO);
-
-    // Insertar logos desde Base64
-
 
     // Insertar líneas de la plantilla con formato específico
     const lineas = CONFIG.PLANTILLA.split('\n');
