@@ -220,8 +220,8 @@ function verEstadoSistema() {
 
   const mensaje = `📊 ESTADO DEL SISTEMA
 
-📌 Plantilla: Interna (texto sin formato especial)
-📁 Carpeta PDF: ${carpetaPDF}
+
+
 🔢 Próximo número interno: ${siguiente}
 📈 Historial: ${estadoHistorial}`;
 
