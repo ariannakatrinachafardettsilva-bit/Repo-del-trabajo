@@ -1,5 +1,5 @@
 // Sistema DEU – generación automatizada de oficios
-// (basado en test2.pdf, versión 7.3)
+// Versión simplificada: sin formato personalizado, solo plantilla de texto.
 
 // ==================== CONFIGURACIÓN GLOBAL ====================
 const CONFIG = {
@@ -22,27 +22,15 @@ Profa. Mercy Ospina Directora de Extensión Universitaria
 
 “Ciudad Universitaria de Caracas, Patrimonio de la Humanidad: 2025, vigésimo quinto aniversario de la Declaración de la UNESCO ”
 
-Edif. Biblioteca Central, Piso 05, Ciudad Universitaria de Caracas, Venezuela, correos electrónicos dir.dirección@gmail.com, sub.direccion@gmail.com, deu.contactos@gmail.com, Teléfonos: 605.3886/4940.`,
+Edif. Biblioteca Central, Piso 05, Ciudad Universitaria de Caracas, Venezuela, correos electrónicos dir.direccion@gmail.com, sub.direccion@gmail.com, deu.contactos@gmail.com, Teléfonos: 605.3886/4940.`,
   CARPETA_PDF_ID: '',      // ID de carpeta en Drive para guardar PDFs (opcional)
-  HISTORIAL_HABILITADO: true,
-  ESTILOS: {
-    FUENTE: 'Arial',
-    TAMANO_NORMAL: 11,
-    TAMANO_CODIGO: 14,
-    MARGEN_SUPERIOR: 72,
-    MARGEN_INFERIOR: 72,
-    MARGEN_IZQUIERDO: 72,
-    MARGEN_DERECHO: 72,
-    INTERLINEADO: 1.15
-  }
+  HISTORIAL_HABILITADO: true
 };
 
 // ==================== FUNCIONES AUXILIARES ====================
 const Utils = {
   zeroPad(num, length) {
-    let s = String(num);
-    while (s.length < length) s = '0' + s;
-    return s;
+    return String(num).padStart(length, '0');
   },
 
   fechaActualFormateada() {
@@ -54,7 +42,8 @@ const Utils = {
 
   pedirDato(titulo, pregunta, obligatorio = true, defaultValue = '') {
     const ui = DocumentApp.getUi();
-    for (let intentos = 0; intentos < 3; intentos++) {
+    let intentos = 0;
+    while (intentos < 3) {
       let texto = pregunta;
       if (defaultValue) texto += `\n\n(Valor por defecto: "${defaultValue}")`;
       const respuesta = ui.prompt(titulo, texto, ui.ButtonSet.OK_CANCEL);
@@ -62,7 +51,8 @@ const Utils = {
       let valor = respuesta.getResponseText().trim();
       if (valor === '' && defaultValue) valor = defaultValue;
       if (valor || !obligatorio) return valor || 'N/A';
-      if (intentos < 2) ui.alert('⚠️ Campo Requerido', `Intento ${intentos+1} de 3`, ui.ButtonSet.OK);
+      intentos++;
+      if (intentos < 3) ui.alert('⚠️ Campo Requerido', `Intento ${intentos} de 3`, ui.ButtonSet.OK);
     }
     ui.alert('❌ Demasiados intentos', 'Operación cancelada.', ui.ButtonSet.OK);
     return null;
@@ -81,7 +71,6 @@ const Utils = {
   }
 };
 
-
 // ==================== GESTOR DE PROPIEDADES ====================
 const Props = {
   get(key, defaultValue = '1') {
@@ -91,7 +80,7 @@ const Props = {
     PropertiesService.getScriptProperties().setProperty(key, String(value));
   },
   incrementarContador() {
-    const actual = parseInt(this.get('n_oficio', '1'));
+    const actual = parseInt(this.get('n_oficio', '1'), 10);
     this.set('n_oficio', actual + 1);
     return actual;
   }
@@ -169,31 +158,10 @@ const Documento = {
     const doc = DocumentApp.create(nombreArchivo);
     const body = doc.getBody();
 
-    // Aplicar estilos generales al documento
-    body.setFontSize(CONFIG.ESTILOS.TAMANO_NORMAL);
-    body.setFontFamily(CONFIG.ESTILOS.FUENTE);
-    body.setMarginTop(CONFIG.ESTILOS.MARGEN_SUPERIOR);
-    body.setMarginBottom(CONFIG.ESTILOS.MARGEN_INFERIOR);
-    body.setMarginLeft(CONFIG.ESTILOS.MARGEN_IZQUIERDO);
-    body.setMarginRight(CONFIG.ESTILOS.MARGEN_DERECHO);
-    body.setLineSpacing(CONFIG.ESTILOS.INTERLINEADO);
+    // Insertar texto de la plantilla
+    body.setText(CONFIG.PLANTILLA);
 
-    // Insertar líneas de la plantilla con formato específico
-    const lineas = CONFIG.PLANTILLA.split('\n');
-    lineas.forEach(linea => {
-      const parrafo = body.appendParagraph(linea);
-      
-      // Aplicar formato según el contenido de la línea
-      if (linea.includes('{{codigo}}')) {
-        parrafo.setBold(true).setFontSize(CONFIG.ESTILOS.TAMANO_CODIGO);
-      } else if (linea.includes('Asunto:')) {
-        parrafo.setBold(true);
-      } else if (linea.includes('Atentamente.') || linea.includes('Profa. Mercy Ospina')) {
-        parrafo.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-      }
-    });
-
-    // Reemplazar etiquetas (el formato se conserva)
+    // Reemplazar etiquetas
     const reemplazos = {
       '{{codigo}}': datos.codigo,
       '{{fecha}}': datos.fecha,
@@ -202,15 +170,13 @@ const Documento = {
       '{{escuela}}': datos.escuela,
       '{{asunto}}': datos.asunto
     };
-    Object.keys(reemplazos).forEach(etiqueta => {
-      body.replaceText(etiqueta, reemplazos[etiqueta]);
+    Object.entries(reemplazos).forEach(([etiqueta, valor]) => {
+      body.replaceText(etiqueta, valor);
     });
 
     doc.saveAndClose();
     return doc;
   },
-
-
 
   generarPDF(doc, nombreArchivo) {
     const pdfBlob = doc.getAs(MimeType.PDF).setName(`${nombreArchivo}.pdf`);
@@ -222,24 +188,6 @@ const Documento = {
       pdfFile = DriveApp.createFile(pdfBlob);
     }
     return pdfFile;
-  },
-
-  implementarPlantillaEnDocumentoActual() {
-    const ui = DocumentApp.getUi();
-    const respuesta = ui.alert(
-      '⚠️ Reemplazar contenido',
-      '¿Estás seguro de reemplazar TODO el contenido de este documento con la plantilla base?\n\nEsta acción no se puede deshacer.',
-      ui.ButtonSet.YES_NO
-    );
-    if (respuesta !== ui.Button.YES) return;
-    try {
-      const doc = DocumentApp.getActiveDocument();
-      doc.getBody().clear().setText(CONFIG.PLANTILLA);
-      doc.saveAndClose();
-      Utils.mostrarExito('Plantilla implementada', 'El documento ahora contiene la plantilla base.');
-    } catch (e) {
-      Utils.mostrarError('Error al implementar plantilla', e);
-    }
   }
 };
 
@@ -254,8 +202,6 @@ function onOpen() {
         .addItem('📊 Configurar Historial', 'configurarHistorial'))
       .addSeparator()
       .addItem('📄 Generar Oficio', 'procesarOficioCompleto')
-      .addItem('📄 Crear documento con plantilla', 'crearPlantillaEjemplo')
-      .addItem('📄 Mostrar plantilla en este documento', 'implementarPlantillaEnDocumento')
       .addSeparator()
       .addItem('❓ Ayuda', 'mostrarAyuda')
       .addToUi();
@@ -267,15 +213,14 @@ function onOpen() {
 // ==================== FUNCIONES DEL MENÚ ====================
 function verEstadoSistema() {
   const contador = Props.get('n_oficio', '1');
-  const siguiente = Utils.zeroPad(parseInt(contador), 3);
+  const siguiente = Utils.zeroPad(parseInt(contador, 10), 3);
   const historialId = Props.get('HISTORIAL_ID', '');
   const estadoHistorial = historialId ? '✅ Configurado' : '❌ No configurado';
   const carpetaPDF = CONFIG.CARPETA_PDF_ID ? '✅ Configurada' : '❌ No configurada (raíz)';
 
   const mensaje = `📊 ESTADO DEL SISTEMA
 
-📌 Plantilla: Interna (test2.pdf) con formato profesional
-🖼️ Logos: Integrados (Base64) - no requieren configuración
+📌 Plantilla: Interna (texto sin formato especial)
 📁 Carpeta PDF: ${carpetaPDF}
 🔢 Próximo número interno: ${siguiente}
 📈 Historial: ${estadoHistorial}`;
@@ -288,7 +233,7 @@ function resetearContador() {
   const actual = Props.get('n_oficio', '1');
   const respuesta = ui.alert(
     '⚠️ Resetear Contador',
-    `¿Reiniciar a 001?\nNúmero actual: ${Utils.zeroPad(parseInt(actual), 3)}`,
+    `¿Reiniciar a 001?\nNúmero actual: ${Utils.zeroPad(parseInt(actual, 10), 3)}`,
     ui.ButtonSet.YES_NO
   );
   if (respuesta === ui.Button.YES) {
@@ -330,21 +275,6 @@ function mostrarAyuda() {
     HtmlService.createHtmlOutput(html).setWidth(450).setHeight(550),
     '❓ Ayuda - Sistema DEU'
   );
-}
-
-function crearPlantillaEjemplo() {
-  try {
-    const doc = DocumentApp.create('Plantilla DEU - Test2');
-    doc.getBody().setText(CONFIG.PLANTILLA);
-    doc.saveAndClose();
-    Utils.mostrarExito('Plantilla creada', `Documento: ${doc.getUrl()}`);
-  } catch (e) {
-    Utils.mostrarError('No se pudo crear la plantilla.', e);
-  }
-}
-
-function implementarPlantillaEnDocumento() {
-  Documento.implementarPlantillaEnDocumentoActual();
 }
 
 // ==================== PROCESO PRINCIPAL ====================
